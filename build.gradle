@@ -1,0 +1,93 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+    id 'maven-publish'
+}
+
+group = 'com.etendorx.integration'
+version = '0.0.3-SNAPSHOT'
+sourceCompatibility = JavaVersion.VERSION_17
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2022.0.4")
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation project(':com.etendorx.lib.kafka')
+    implementation 'org.springframework.kafka:spring-kafka:3.2.4'
+    /*
+    implementation project(':com.etendorx.integration.obconn.common')
+    implementation project(':com.etendorx.integration.obconn.lib')
+    implementation("com.squareup.okhttp3:logging-interceptor")
+    implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.0'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation(project(':com.etendorx.utils.auth')) {
+        exclude group: 'org.slf4j', module: '*'
+    }
+    implementation 'com.jayway.jsonpath:json-path:2.8.0'
+     */
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'application'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        testImplementation 'junit:junit:4.12'
+    }
+}
+
+springBoot {
+    buildInfo()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId 'obconn-wrk'
+            artifact tasks.named("bootJar")
+        }
+    }
+
+    repositories {
+        maven {
+            url = "${repositoryUrl}"
+
+            credentials {
+                username = "${nexusUser}"
+                password = "${nexusPassword}"
+            }
+        }
+    }
+}
